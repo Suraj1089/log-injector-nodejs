@@ -8,21 +8,28 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Log Query Interface</title>
   <style>
-      .loader {
-    border: 8px solid #f3f3f3;
-    border-top: 8px solid #3498db;
-    border-radius: 50%;
-    width: 50px;
-    height: 50px;
-    animation: spin 1s linear infinite;
-    margin: 0 auto;
-    display: none; /* Initially hidden */
-  }
+    .loader {
+      border: 8px solid #f3f3f3;
+      border-top: 8px solid #3498db;
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto;
+      display: none;
+      /* Initially hidden */
+    }
 
-  @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-  }
+    @keyframes spin {
+      0% {
+        transform: rotate(0deg);
+      }
+
+      100% {
+        transform: rotate(360deg);
+      }
+    }
+
     body {
       font-family: Arial, sans-serif;
       margin: 0;
@@ -132,6 +139,18 @@
     function sendLogs() {
       // Fetch logs from a file (you can modify this based on your directory structure)
       const logs = [
+        {
+          "level": "error",
+          "message": "Failed to connect to DB",
+          "resourceId": "server-1234",
+          "timestamp": "2023-09-15T08:00:00Z",
+          "traceId": "abc-xyz-123",
+          "spanId": "SEARCH",
+          "commit": "5e5342f",
+          "metadata": {
+            "parentResourceId": "server-0987"
+          }
+        },
         {
           "level": "error",
           "message": "Failed to connect to DB",
@@ -1249,7 +1268,7 @@
           }
         }
       ]
-      
+
       const socket = io('http://localhost:3000');
       // Send each log to the server using WebSocket
       logs.forEach(async (log, index) => {
@@ -1261,11 +1280,11 @@
         }
       });
     }
-   
-    async function searchLogs() {
-          // Show loader while searching
 
-const loader = document.getElementById('loader');
+    async function searchLogs() {
+      // Show loader while searching
+
+      const loader = document.getElementById('loader');
       const level = document.getElementById('level').value;
       const message = document.getElementById('message').value;
       const resourceId = document.getElementById('resourceId').value;
@@ -1274,7 +1293,7 @@ const loader = document.getElementById('loader');
       const spanId = document.getElementById('spanId').value;
       const commit = document.getElementById('commit').value;
       const parentResourceId = document.getElementById('parentResourceId').value;
-  
+
       const searchCriteria = {
         level,
         message,
@@ -1287,10 +1306,10 @@ const loader = document.getElementById('loader');
       };
       loader.style.display = 'block';
 
-// Simulate a delay for demonstration purposes (remove in a real application)
-await new Promise(resolve => setTimeout(resolve, 2000));
+      // Simulate a delay for demonstration purposes (remove in a real application)
+      await new Promise(resolve => setTimeout(resolve, 2000));
       console.log(searchCriteria);
-  
+
       try {
         const response = await fetch('http://localhost:3000/search', {
           method: 'POST',
@@ -1299,11 +1318,11 @@ await new Promise(resolve => setTimeout(resolve, 2000));
           },
           body: JSON.stringify(searchCriteria),
         });
-  
+
         const result = await response.json();
-  
+
         // Handle the search results
-        if (result.success) {
+        if (result.success && result.result) {
           const resultsContainer = document.getElementById('results');
           resultsContainer.innerHTML = '<h3>Search Results:</h3>';
           result.results.forEach((log) => {
@@ -1314,8 +1333,7 @@ await new Promise(resolve => setTimeout(resolve, 2000));
           });
           loader.style.display = 'None';
         } else {
-          console.error('Search failed:', result.error);
-          alert('Search failed. Please check the console for details.');
+          alert('No Records found');
           loader.style.display = 'None';
         }
       } catch (error) {
