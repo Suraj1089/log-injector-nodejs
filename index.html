@@ -1,0 +1,1330 @@
+<!-- index.html -->
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Log Query Interface</title>
+  <style>
+      .loader {
+    border: 8px solid #f3f3f3;
+    border-top: 8px solid #3498db;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    animation: spin 1s linear infinite;
+    margin: 0 auto;
+    display: none; /* Initially hidden */
+  }
+
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f4f4f4;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 50px auto;
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+
+    h1 {
+      text-align: center;
+    }
+
+    .filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    label {
+      flex: 1;
+      min-width: 100px;
+    }
+
+    input {
+      width: 100%;
+      padding: 8px;
+      box-sizing: border-box;
+    }
+
+    button {
+      background-color: #4caf50;
+      color: #fff;
+      padding: 10px;
+      cursor: pointer;
+      border: none;
+      border-radius: 4px;
+    }
+
+    button:hover {
+      background-color: #45a049;
+    }
+
+    .results {
+      padding: 20px;
+      background-color: #fff;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h1>Log Query Interface</h1>
+
+    <div class="filters">
+      <label for="level">Level:</label>
+      <input type="text" id="level" placeholder="Enter log level">
+
+      <label for="message">Message:</label>
+      <input type="text" id="message" placeholder="Enter log message">
+
+      <label for="resourceId">Resource ID:</label>
+      <input type="text" id="resourceId" placeholder="Enter resource ID">
+
+      <label for="timestamp">Timestamp:</label>
+      <input type="text" id="timestamp" placeholder="Enter timestamp">
+
+      <label for="traceId">Trace ID:</label>
+      <input type="text" id="traceId" placeholder="Enter trace ID">
+
+      <label for="spanId">Span ID:</label>
+      <input type="text" id="spanId" placeholder="Enter span ID">
+
+      <label for="commit">Commit:</label>
+      <input type="text" id="commit" placeholder="Enter commit">
+
+      <label for="parentResourceId">Parent Resource ID:</label>
+      <input type="text" id="parentResourceId" placeholder="Enter parent resource ID">
+
+      <button onclick="searchLogs()">Search Logs</button>
+      <button onclick="sendLogs()">Send Logs</button>
+    </div>
+
+    <div class="results" id="results">
+      <!-- Display search results here -->
+    </div>
+    <div>
+      <h1>Real-time Log Viewer</h1>
+      <div id="logContainer">
+        <!-- Display real-time logs here -->
+      </div>
+    </div>
+    <div id="loader" class="loader"></div>
+  </div>
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    function sendLogs() {
+      // Fetch logs from a file (you can modify this based on your directory structure)
+      const logs = [
+        {
+          "level": "error",
+          "message": "Failed to connect to DB",
+          "resourceId": "server-1234",
+          "timestamp": "2023-09-15T08:00:00Z",
+          "traceId": "abc-xyz-123",
+          "spanId": "span-456",
+          "commit": "5e5342f",
+          "metadata": {
+            "parentResourceId": "server-0987"
+          }
+        },
+        {
+          "level": "error",
+          "message": "Connection timeout",
+          "resourceId": "server-5678",
+          "timestamp": "2023-09-15T09:30:00Z",
+          "traceId": "def-uvw-456",
+          "spanId": "span-789",
+          "commit": "a1b2c3d",
+          "metadata": {
+            "parentResourceId": "server-5432"
+          }
+        },
+        {
+          "level": "warning",
+          "message": "Service unavailable",
+          "resourceId": "server-9876",
+          "timestamp": "2023-09-15T10:45:00Z",
+          "traceId": "ghi-pqr-789",
+          "spanId": "span-012",
+          "commit": "4e5d6f7",
+          "metadata": {
+            "parentResourceId": "server-6543"
+          }
+        },
+        {
+          "level": "error",
+          "message": "Failed to connect to DB",
+          "resourceId": "server-1234",
+          "timestamp": "2023-09-15T08:00:00Z",
+          "traceId": "abc-xyz-123",
+          "spanId": "span-456",
+          "commit": "5e5342f",
+          "metadata": {
+            "parentResourceId": "server-0987"
+          }
+        },
+        {
+          "level": "error",
+          "message": "Connection timeout",
+          "resourceId": "server-5678",
+          "timestamp": "2023-09-15T09:30:00Z",
+          "traceId": "def-uvw-456",
+          "spanId": "span-789",
+          "commit": "a1b2c3d",
+          "metadata": {
+            "parentResourceId": "server-5432"
+          }
+        },
+        {
+          "level": "warning",
+          "message": "Service unavailable",
+          "resourceId": "server-9876",
+          "timestamp": "2023-09-15T10:45:00Z",
+          "traceId": "ghi-pqr-789",
+          "spanId": "span-012",
+          "commit": "4e5d6f7",
+          "metadata": {
+            "parentResourceId": "server-6543"
+          }
+        },
+        {
+          "level": "error",
+          "message": "Failed to connect to DB",
+          "resourceId": "server-1234",
+          "timestamp": "2023-09-15T08:00:00Z",
+          "traceId": "abc-xyz-123",
+          "spanId": "span-456",
+          "commit": "5e5342f",
+          "metadata": {
+            "parentResourceId": "server-0987"
+          }
+        },
+        {
+          "level": "error",
+          "message": "Connection timeout",
+          "resourceId": "server-5678",
+          "timestamp": "2023-09-15T09:30:00Z",
+          "traceId": "def-uvw-456",
+          "spanId": "span-789",
+          "commit": "a1b2c3d",
+          "metadata": {
+            "parentResourceId": "server-5432"
+          }
+        },
+        {
+          "level": "warning",
+          "message": "Service unavailable",
+          "resourceId": "server-9876",
+          "timestamp": "2023-09-15T10:45:00Z",
+          "traceId": "ghi-pqr-789",
+          "spanId": "span-012",
+          "commit": "4e5d6f7",
+          "metadata": {
+            "parentResourceId": "server-6543"
+          }
+        },
+        {
+          "level": "error",
+          "message": "Failed to connect to DB",
+          "resourceId": "server-1234",
+          "timestamp": "2023-09-15T08:00:00Z",
+          "traceId": "abc-xyz-123",
+          "spanId": "span-456",
+          "commit": "5e5342f",
+          "metadata": {
+            "parentResourceId": "server-0987"
+          }
+        },
+        {
+          "level": "error",
+          "message": "Connection timeout",
+          "resourceId": "server-5678",
+          "timestamp": "2023-09-15T09:30:00Z",
+          "traceId": "def-uvw-456",
+          "spanId": "span-789",
+          "commit": "a1b2c3d",
+          "metadata": {
+            "parentResourceId": "server-5432"
+          }
+        },
+        {
+          "level": "warning",
+          "message": "Service unavailable",
+          "resourceId": "server-9876",
+          "timestamp": "2023-09-15T10:45:00Z",
+          "traceId": "ghi-pqr-789",
+          "spanId": "span-012",
+          "commit": "4e5d6f7",
+          "metadata": {
+            "parentResourceId": "server-6543"
+          }
+        },
+        {
+          "level": "error",
+          "message": "Failed to connect to DB",
+          "resourceId": "server-1234",
+          "timestamp": "2023-09-15T08:00:00Z",
+          "traceId": "abc-xyz-123",
+          "spanId": "span-456",
+          "commit": "5e5342f",
+          "metadata": {
+            "parentResourceId": "server-0987"
+          }
+        },
+        {
+          "level": "error",
+          "message": "Connection timeout",
+          "resourceId": "server-5678",
+          "timestamp": "2023-09-15T09:30:00Z",
+          "traceId": "def-uvw-456",
+          "spanId": "span-789",
+          "commit": "a1b2c3d",
+          "metadata": {
+            "parentResourceId": "server-5432"
+          }
+        },
+        {
+          "level": "warning",
+          "message": "Service unavailable",
+          "resourceId": "server-9876",
+          "timestamp": "2023-09-15T10:45:00Z",
+          "traceId": "ghi-pqr-789",
+          "spanId": "span-012",
+          "commit": "4e5d6f7",
+          "metadata": {
+            "parentResourceId": "server-6543"
+          }
+        },
+        {
+          "level": "error",
+          "message": "Failed to connect to DB",
+          "resourceId": "server-1234",
+          "timestamp": "2023-09-15T08:00:00Z",
+          "traceId": "abc-xyz-123",
+          "spanId": "span-456",
+          "commit": "5e5342f",
+          "metadata": {
+            "parentResourceId": "server-0987"
+          }
+        },
+        {
+          "level": "error",
+          "message": "Connection timeout",
+          "resourceId": "server-5678",
+          "timestamp": "2023-09-15T09:30:00Z",
+          "traceId": "def-uvw-456",
+          "spanId": "span-789",
+          "commit": "a1b2c3d",
+          "metadata": {
+            "parentResourceId": "server-5432"
+          }
+        },
+        {
+          "level": "warning",
+          "message": "Service unavailable",
+          "resourceId": "server-9876",
+          "timestamp": "2023-09-15T10:45:00Z",
+          "traceId": "ghi-pqr-789",
+          "spanId": "span-012",
+          "commit": "4e5d6f7",
+          "metadata": {
+            "parentResourceId": "server-6543"
+          }
+        },
+        {
+          "level": "error",
+          "message": "Failed to connect to DB",
+          "resourceId": "server-1234",
+          "timestamp": "2023-09-15T08:00:00Z",
+          "traceId": "abc-xyz-123",
+          "spanId": "span-456",
+          "commit": "5e5342f",
+          "metadata": {
+            "parentResourceId": "server-0987"
+          }
+        },
+        {
+          "level": "error",
+          "message": "Connection timeout",
+          "resourceId": "server-5678",
+          "timestamp": "2023-09-15T09:30:00Z",
+          "traceId": "def-uvw-456",
+          "spanId": "span-789",
+          "commit": "a1b2c3d",
+          "metadata": {
+            "parentResourceId": "server-5432"
+          }
+        },
+        {
+          "level": "warning",
+          "message": "Service unavailable",
+          "resourceId": "server-9876",
+          "timestamp": "2023-09-15T10:45:00Z",
+          "traceId": "ghi-pqr-789",
+          "spanId": "span-012",
+          "commit": "4e5d6f7",
+          "metadata": {
+            "parentResourceId": "server-6543"
+          }
+        },
+        {
+          "level": "error",
+          "message": "Failed to connect to DB",
+          "resourceId": "server-1234",
+          "timestamp": "2023-09-15T08:00:00Z",
+          "traceId": "abc-xyz-123",
+          "spanId": "span-456",
+          "commit": "5e5342f",
+          "metadata": {
+            "parentResourceId": "server-0987"
+          }
+        },
+        {
+          "level": "error",
+          "message": "Connection timeout",
+          "resourceId": "server-5678",
+          "timestamp": "2023-09-15T09:30:00Z",
+          "traceId": "def-uvw-456",
+          "spanId": "span-789",
+          "commit": "a1b2c3d",
+          "metadata": {
+            "parentResourceId": "server-5432"
+          }
+        },
+        {
+          "level": "warning",
+          "message": "Service unavailable",
+          "resourceId": "server-9876",
+          "timestamp": "2023-09-15T10:45:00Z",
+          "traceId": "ghi-pqr-789",
+          "spanId": "span-012",
+          "commit": "4e5d6f7",
+          "metadata": {
+            "parentResourceId": "server-6543"
+          }
+        },
+        {
+          "level": "error",
+          "message": "Failed to connect to DB",
+          "resourceId": "server-1234",
+          "timestamp": "2023-09-15T08:00:00Z",
+          "traceId": "abc-xyz-123",
+          "spanId": "span-456",
+          "commit": "5e5342f",
+          "metadata": {
+            "parentResourceId": "server-0987"
+          }
+        },
+        {
+          "level": "error",
+          "message": "Connection timeout",
+          "resourceId": "server-5678",
+          "timestamp": "2023-09-15T09:30:00Z",
+          "traceId": "def-uvw-456",
+          "spanId": "span-789",
+          "commit": "a1b2c3d",
+          "metadata": {
+            "parentResourceId": "server-5432"
+          }
+        },
+        {
+          "level": "warning",
+          "message": "Service unavailable",
+          "resourceId": "server-9876",
+          "timestamp": "2023-09-15T10:45:00Z",
+          "traceId": "ghi-pqr-789",
+          "spanId": "span-012",
+          "commit": "4e5d6f7",
+          "metadata": {
+            "parentResourceId": "server-6543"
+          }
+        },
+        {
+          "level": "error",
+          "message": "Failed to connect to DB",
+          "resourceId": "server-1234",
+          "timestamp": "2023-09-15T08:00:00Z",
+          "traceId": "abc-xyz-123",
+          "spanId": "span-456",
+          "commit": "5e5342f",
+          "metadata": {
+            "parentResourceId": "server-0987"
+          }
+        },
+        {
+          "level": "error",
+          "message": "Connection timeout",
+          "resourceId": "server-5678",
+          "timestamp": "2023-09-15T09:30:00Z",
+          "traceId": "def-uvw-456",
+          "spanId": "span-789",
+          "commit": "a1b2c3d",
+          "metadata": {
+            "parentResourceId": "server-5432"
+          }
+        },
+        {
+          "level": "warning",
+          "message": "Service unavailable",
+          "resourceId": "server-9876",
+          "timestamp": "2023-09-15T10:45:00Z",
+          "traceId": "ghi-pqr-789",
+          "spanId": "span-012",
+          "commit": "4e5d6f7",
+          "metadata": {
+            "parentResourceId": "server-6543"
+          }
+        },
+        {
+          "level": "error",
+          "message": "Failed to connect to DB",
+          "resourceId": "server-1234",
+          "timestamp": "2023-09-15T08:00:00Z",
+          "traceId": "abc-xyz-123",
+          "spanId": "span-456",
+          "commit": "5e5342f",
+          "metadata": {
+            "parentResourceId": "server-0987"
+          }
+        },
+        {
+          "level": "error",
+          "message": "Connection timeout",
+          "resourceId": "server-5678",
+          "timestamp": "2023-09-15T09:30:00Z",
+          "traceId": "def-uvw-456",
+          "spanId": "span-789",
+          "commit": "a1b2c3d",
+          "metadata": {
+            "parentResourceId": "server-5432"
+          }
+        },
+        {
+          "level": "warning",
+          "message": "Service unavailable",
+          "resourceId": "server-9876",
+          "timestamp": "2023-09-15T10:45:00Z",
+          "traceId": "ghi-pqr-789",
+          "spanId": "span-012",
+          "commit": "4e5d6f7",
+          "metadata": {
+            "parentResourceId": "server-6543"
+          }
+        },
+        {
+          "level": "error",
+          "message": "Failed to connect to DB",
+          "resourceId": "server-1234",
+          "timestamp": "2023-09-15T08:00:00Z",
+          "traceId": "abc-xyz-123",
+          "spanId": "span-456",
+          "commit": "5e5342f",
+          "metadata": {
+            "parentResourceId": "server-0987"
+          }
+        },
+        {
+          "level": "error",
+          "message": "Connection timeout",
+          "resourceId": "server-5678",
+          "timestamp": "2023-09-15T09:30:00Z",
+          "traceId": "def-uvw-456",
+          "spanId": "span-789",
+          "commit": "a1b2c3d",
+          "metadata": {
+            "parentResourceId": "server-5432"
+          }
+        },
+        {
+          "level": "warning",
+          "message": "Service unavailable",
+          "resourceId": "server-9876",
+          "timestamp": "2023-09-15T10:45:00Z",
+          "traceId": "ghi-pqr-789",
+          "spanId": "span-012",
+          "commit": "4e5d6f7",
+          "metadata": {
+            "parentResourceId": "server-6543"
+          }
+        },
+        {
+          "level": "error",
+          "message": "Failed to connect to DB",
+          "resourceId": "server-1234",
+          "timestamp": "2023-09-15T08:00:00Z",
+          "traceId": "abc-xyz-123",
+          "spanId": "span-456",
+          "commit": "5e5342f",
+          "metadata": {
+            "parentResourceId": "server-0987"
+          }
+        },
+        {
+          "level": "error",
+          "message": "Connection timeout",
+          "resourceId": "server-5678",
+          "timestamp": "2023-09-15T09:30:00Z",
+          "traceId": "def-uvw-456",
+          "spanId": "span-789",
+          "commit": "a1b2c3d",
+          "metadata": {
+            "parentResourceId": "server-5432"
+          }
+        },
+        {
+          "level": "warning",
+          "message": "Service unavailable",
+          "resourceId": "server-9876",
+          "timestamp": "2023-09-15T10:45:00Z",
+          "traceId": "ghi-pqr-789",
+          "spanId": "span-012",
+          "commit": "4e5d6f7",
+          "metadata": {
+            "parentResourceId": "server-6543"
+          }
+        },
+        {
+          "level": "error",
+          "message": "Failed to connect to DB",
+          "resourceId": "server-1234",
+          "timestamp": "2023-09-15T08:00:00Z",
+          "traceId": "abc-xyz-123",
+          "spanId": "span-456",
+          "commit": "5e5342f",
+          "metadata": {
+            "parentResourceId": "server-0987"
+          }
+        },
+        {
+          "level": "error",
+          "message": "Connection timeout",
+          "resourceId": "server-5678",
+          "timestamp": "2023-09-15T09:30:00Z",
+          "traceId": "def-uvw-456",
+          "spanId": "span-789",
+          "commit": "a1b2c3d",
+          "metadata": {
+            "parentResourceId": "server-5432"
+          }
+        },
+        {
+          "level": "warning",
+          "message": "Service unavailable",
+          "resourceId": "server-9876",
+          "timestamp": "2023-09-15T10:45:00Z",
+          "traceId": "ghi-pqr-789",
+          "spanId": "span-012",
+          "commit": "4e5d6f7",
+          "metadata": {
+            "parentResourceId": "server-6543"
+          }
+        },
+        {
+          "level": "error",
+          "message": "Failed to connect to DB",
+          "resourceId": "server-1234",
+          "timestamp": "2023-09-15T08:00:00Z",
+          "traceId": "abc-xyz-123",
+          "spanId": "span-456",
+          "commit": "5e5342f",
+          "metadata": {
+            "parentResourceId": "server-0987"
+          }
+        },
+        {
+          "level": "error",
+          "message": "Connection timeout",
+          "resourceId": "server-5678",
+          "timestamp": "2023-09-15T09:30:00Z",
+          "traceId": "def-uvw-456",
+          "spanId": "span-789",
+          "commit": "a1b2c3d",
+          "metadata": {
+            "parentResourceId": "server-5432"
+          }
+        },
+        {
+          "level": "warning",
+          "message": "Service unavailable",
+          "resourceId": "server-9876",
+          "timestamp": "2023-09-15T10:45:00Z",
+          "traceId": "ghi-pqr-789",
+          "spanId": "span-012",
+          "commit": "4e5d6f7",
+          "metadata": {
+            "parentResourceId": "server-6543"
+          }
+        },
+        {
+          "level": "error",
+          "message": "Failed to connect to DB",
+          "resourceId": "server-1234",
+          "timestamp": "2023-09-15T08:00:00Z",
+          "traceId": "abc-xyz-123",
+          "spanId": "span-456",
+          "commit": "5e5342f",
+          "metadata": {
+            "parentResourceId": "server-0987"
+          }
+        },
+        {
+          "level": "error",
+          "message": "Connection timeout",
+          "resourceId": "server-5678",
+          "timestamp": "2023-09-15T09:30:00Z",
+          "traceId": "def-uvw-456",
+          "spanId": "span-789",
+          "commit": "a1b2c3d",
+          "metadata": {
+            "parentResourceId": "server-5432"
+          }
+        },
+        {
+          "level": "warning",
+          "message": "Service unavailable",
+          "resourceId": "server-9876",
+          "timestamp": "2023-09-15T10:45:00Z",
+          "traceId": "ghi-pqr-789",
+          "spanId": "span-012",
+          "commit": "4e5d6f7",
+          "metadata": {
+            "parentResourceId": "server-6543"
+          }
+        },
+        {
+          "level": "error",
+          "message": "Failed to connect to DB",
+          "resourceId": "server-1234",
+          "timestamp": "2023-09-15T08:00:00Z",
+          "traceId": "abc-xyz-123",
+          "spanId": "span-456",
+          "commit": "5e5342f",
+          "metadata": {
+            "parentResourceId": "server-0987"
+          }
+        },
+        {
+          "level": "error",
+          "message": "Connection timeout",
+          "resourceId": "server-5678",
+          "timestamp": "2023-09-15T09:30:00Z",
+          "traceId": "def-uvw-456",
+          "spanId": "span-789",
+          "commit": "a1b2c3d",
+          "metadata": {
+            "parentResourceId": "server-5432"
+          }
+        },
+        {
+          "level": "warning",
+          "message": "Service unavailable",
+          "resourceId": "server-9876",
+          "timestamp": "2023-09-15T10:45:00Z",
+          "traceId": "ghi-pqr-789",
+          "spanId": "span-012",
+          "commit": "4e5d6f7",
+          "metadata": {
+            "parentResourceId": "server-6543"
+          }
+        },
+        {
+          "level": "error",
+          "message": "Failed to connect to DB",
+          "resourceId": "server-1234",
+          "timestamp": "2023-09-15T08:00:00Z",
+          "traceId": "abc-xyz-123",
+          "spanId": "span-456",
+          "commit": "5e5342f",
+          "metadata": {
+            "parentResourceId": "server-0987"
+          }
+        },
+        {
+          "level": "error",
+          "message": "Connection timeout",
+          "resourceId": "server-5678",
+          "timestamp": "2023-09-15T09:30:00Z",
+          "traceId": "def-uvw-456",
+          "spanId": "span-789",
+          "commit": "a1b2c3d",
+          "metadata": {
+            "parentResourceId": "server-5432"
+          }
+        },
+        {
+          "level": "warning",
+          "message": "Service unavailable",
+          "resourceId": "server-9876",
+          "timestamp": "2023-09-15T10:45:00Z",
+          "traceId": "ghi-pqr-789",
+          "spanId": "span-012",
+          "commit": "4e5d6f7",
+          "metadata": {
+            "parentResourceId": "server-6543"
+          }
+        },
+        {
+          "level": "error",
+          "message": "Failed to connect to DB",
+          "resourceId": "server-1234",
+          "timestamp": "2023-09-15T08:00:00Z",
+          "traceId": "abc-xyz-123",
+          "spanId": "span-456",
+          "commit": "5e5342f",
+          "metadata": {
+            "parentResourceId": "server-0987"
+          }
+        },
+        {
+          "level": "error",
+          "message": "Connection timeout",
+          "resourceId": "server-5678",
+          "timestamp": "2023-09-15T09:30:00Z",
+          "traceId": "def-uvw-456",
+          "spanId": "span-789",
+          "commit": "a1b2c3d",
+          "metadata": {
+            "parentResourceId": "server-5432"
+          }
+        },
+        {
+          "level": "warning",
+          "message": "Service unavailable",
+          "resourceId": "server-9876",
+          "timestamp": "2023-09-15T10:45:00Z",
+          "traceId": "ghi-pqr-789",
+          "spanId": "span-012",
+          "commit": "4e5d6f7",
+          "metadata": {
+            "parentResourceId": "server-6543"
+          }
+        },
+        {
+          "level": "error",
+          "message": "Failed to connect to DB",
+          "resourceId": "server-1234",
+          "timestamp": "2023-09-15T08:00:00Z",
+          "traceId": "abc-xyz-123",
+          "spanId": "span-456",
+          "commit": "5e5342f",
+          "metadata": {
+            "parentResourceId": "server-0987"
+          }
+        },
+        {
+          "level": "error",
+          "message": "Connection timeout",
+          "resourceId": "server-5678",
+          "timestamp": "2023-09-15T09:30:00Z",
+          "traceId": "def-uvw-456",
+          "spanId": "span-789",
+          "commit": "a1b2c3d",
+          "metadata": {
+            "parentResourceId": "server-5432"
+          }
+        },
+        {
+          "level": "warning",
+          "message": "Service unavailable",
+          "resourceId": "server-9876",
+          "timestamp": "2023-09-15T10:45:00Z",
+          "traceId": "ghi-pqr-789",
+          "spanId": "span-012",
+          "commit": "4e5d6f7",
+          "metadata": {
+            "parentResourceId": "server-6543"
+          }
+        },
+        {
+          "level": "error",
+          "message": "Failed to connect to DB",
+          "resourceId": "server-1234",
+          "timestamp": "2023-09-15T08:00:00Z",
+          "traceId": "abc-xyz-123",
+          "spanId": "span-456",
+          "commit": "5e5342f",
+          "metadata": {
+            "parentResourceId": "server-0987"
+          }
+        },
+        {
+          "level": "error",
+          "message": "Connection timeout",
+          "resourceId": "server-5678",
+          "timestamp": "2023-09-15T09:30:00Z",
+          "traceId": "def-uvw-456",
+          "spanId": "span-789",
+          "commit": "a1b2c3d",
+          "metadata": {
+            "parentResourceId": "server-5432"
+          }
+        },
+        {
+          "level": "warning",
+          "message": "Service unavailable",
+          "resourceId": "server-9876",
+          "timestamp": "2023-09-15T10:45:00Z",
+          "traceId": "ghi-pqr-789",
+          "spanId": "span-012",
+          "commit": "4e5d6f7",
+          "metadata": {
+            "parentResourceId": "server-6543"
+          }
+        },
+        {
+          "level": "error",
+          "message": "Failed to connect to DB",
+          "resourceId": "server-1234",
+          "timestamp": "2023-09-15T08:00:00Z",
+          "traceId": "abc-xyz-123",
+          "spanId": "span-456",
+          "commit": "5e5342f",
+          "metadata": {
+            "parentResourceId": "server-0987"
+          }
+        },
+        {
+          "level": "error",
+          "message": "Connection timeout",
+          "resourceId": "server-5678",
+          "timestamp": "2023-09-15T09:30:00Z",
+          "traceId": "def-uvw-456",
+          "spanId": "span-789",
+          "commit": "a1b2c3d",
+          "metadata": {
+            "parentResourceId": "server-5432"
+          }
+        },
+        {
+          "level": "warning",
+          "message": "Service unavailable",
+          "resourceId": "server-9876",
+          "timestamp": "2023-09-15T10:45:00Z",
+          "traceId": "ghi-pqr-789",
+          "spanId": "span-012",
+          "commit": "4e5d6f7",
+          "metadata": {
+            "parentResourceId": "server-6543"
+          }
+        },
+        {
+          "level": "error",
+          "message": "Failed to connect to DB",
+          "resourceId": "server-1234",
+          "timestamp": "2023-09-15T08:00:00Z",
+          "traceId": "abc-xyz-123",
+          "spanId": "span-456",
+          "commit": "5e5342f",
+          "metadata": {
+            "parentResourceId": "server-0987"
+          }
+        },
+        {
+          "level": "error",
+          "message": "Connection timeout",
+          "resourceId": "server-5678",
+          "timestamp": "2023-09-15T09:30:00Z",
+          "traceId": "def-uvw-456",
+          "spanId": "span-789",
+          "commit": "a1b2c3d",
+          "metadata": {
+            "parentResourceId": "server-5432"
+          }
+        },
+        {
+          "level": "warning",
+          "message": "Service unavailable",
+          "resourceId": "server-9876",
+          "timestamp": "2023-09-15T10:45:00Z",
+          "traceId": "ghi-pqr-789",
+          "spanId": "span-012",
+          "commit": "4e5d6f7",
+          "metadata": {
+            "parentResourceId": "server-6543"
+          }
+        },
+        {
+          "level": "error",
+          "message": "Failed to connect to DB",
+          "resourceId": "server-1234",
+          "timestamp": "2023-09-15T08:00:00Z",
+          "traceId": "abc-xyz-123",
+          "spanId": "span-456",
+          "commit": "5e5342f",
+          "metadata": {
+            "parentResourceId": "server-0987"
+          }
+        },
+        {
+          "level": "error",
+          "message": "Connection timeout",
+          "resourceId": "server-5678",
+          "timestamp": "2023-09-15T09:30:00Z",
+          "traceId": "def-uvw-456",
+          "spanId": "span-789",
+          "commit": "a1b2c3d",
+          "metadata": {
+            "parentResourceId": "server-5432"
+          }
+        },
+        {
+          "level": "warning",
+          "message": "Service unavailable",
+          "resourceId": "server-9876",
+          "timestamp": "2023-09-15T10:45:00Z",
+          "traceId": "ghi-pqr-789",
+          "spanId": "span-012",
+          "commit": "4e5d6f7",
+          "metadata": {
+            "parentResourceId": "server-6543"
+          }
+        },
+        {
+          "level": "error",
+          "message": "Failed to connect to DB",
+          "resourceId": "server-1234",
+          "timestamp": "2023-09-15T08:00:00Z",
+          "traceId": "abc-xyz-123",
+          "spanId": "span-456",
+          "commit": "5e5342f",
+          "metadata": {
+            "parentResourceId": "server-0987"
+          }
+        },
+        {
+          "level": "error",
+          "message": "Connection timeout",
+          "resourceId": "server-5678",
+          "timestamp": "2023-09-15T09:30:00Z",
+          "traceId": "def-uvw-456",
+          "spanId": "span-789",
+          "commit": "a1b2c3d",
+          "metadata": {
+            "parentResourceId": "server-5432"
+          }
+        },
+        {
+          "level": "warning",
+          "message": "Service unavailable",
+          "resourceId": "server-9876",
+          "timestamp": "2023-09-15T10:45:00Z",
+          "traceId": "ghi-pqr-789",
+          "spanId": "span-012",
+          "commit": "4e5d6f7",
+          "metadata": {
+            "parentResourceId": "server-6543"
+          }
+        },
+        {
+          "level": "error",
+          "message": "Failed to connect to DB",
+          "resourceId": "server-1234",
+          "timestamp": "2023-09-15T08:00:00Z",
+          "traceId": "abc-xyz-123",
+          "spanId": "span-456",
+          "commit": "5e5342f",
+          "metadata": {
+            "parentResourceId": "server-0987"
+          }
+        },
+        {
+          "level": "error",
+          "message": "Connection timeout",
+          "resourceId": "server-5678",
+          "timestamp": "2023-09-15T09:30:00Z",
+          "traceId": "def-uvw-456",
+          "spanId": "span-789",
+          "commit": "a1b2c3d",
+          "metadata": {
+            "parentResourceId": "server-5432"
+          }
+        },
+        {
+          "level": "warning",
+          "message": "Service unavailable",
+          "resourceId": "server-9876",
+          "timestamp": "2023-09-15T10:45:00Z",
+          "traceId": "ghi-pqr-789",
+          "spanId": "span-012",
+          "commit": "4e5d6f7",
+          "metadata": {
+            "parentResourceId": "server-6543"
+          }
+        },
+        {
+          "level": "error",
+          "message": "Failed to connect to DB",
+          "resourceId": "server-1234",
+          "timestamp": "2023-09-15T08:00:00Z",
+          "traceId": "abc-xyz-123",
+          "spanId": "span-456",
+          "commit": "5e5342f",
+          "metadata": {
+            "parentResourceId": "server-0987"
+          }
+        },
+        {
+          "level": "error",
+          "message": "Connection timeout",
+          "resourceId": "server-5678",
+          "timestamp": "2023-09-15T09:30:00Z",
+          "traceId": "def-uvw-456",
+          "spanId": "span-789",
+          "commit": "a1b2c3d",
+          "metadata": {
+            "parentResourceId": "server-5432"
+          }
+        },
+        {
+          "level": "warning",
+          "message": "Service unavailable",
+          "resourceId": "server-9876",
+          "timestamp": "2023-09-15T10:45:00Z",
+          "traceId": "ghi-pqr-789",
+          "spanId": "span-012",
+          "commit": "4e5d6f7",
+          "metadata": {
+            "parentResourceId": "server-6543"
+          }
+        },
+        {
+          "level": "error",
+          "message": "Failed to connect to DB",
+          "resourceId": "server-1234",
+          "timestamp": "2023-09-15T08:00:00Z",
+          "traceId": "abc-xyz-123",
+          "spanId": "span-456",
+          "commit": "5e5342f",
+          "metadata": {
+            "parentResourceId": "server-0987"
+          }
+        },
+        {
+          "level": "error",
+          "message": "Connection timeout",
+          "resourceId": "server-5678",
+          "timestamp": "2023-09-15T09:30:00Z",
+          "traceId": "def-uvw-456",
+          "spanId": "span-789",
+          "commit": "a1b2c3d",
+          "metadata": {
+            "parentResourceId": "server-5432"
+          }
+        },
+        {
+          "level": "warning",
+          "message": "Service unavailable",
+          "resourceId": "server-9876",
+          "timestamp": "2023-09-15T10:45:00Z",
+          "traceId": "ghi-pqr-789",
+          "spanId": "span-012",
+          "commit": "4e5d6f7",
+          "metadata": {
+            "parentResourceId": "server-6543"
+          }
+        },
+        {
+          "level": "error",
+          "message": "Failed to connect to DB",
+          "resourceId": "server-1234",
+          "timestamp": "2023-09-15T08:00:00Z",
+          "traceId": "abc-xyz-123",
+          "spanId": "span-456",
+          "commit": "5e5342f",
+          "metadata": {
+            "parentResourceId": "server-0987"
+          }
+        },
+        {
+          "level": "error",
+          "message": "Connection timeout",
+          "resourceId": "server-5678",
+          "timestamp": "2023-09-15T09:30:00Z",
+          "traceId": "def-uvw-456",
+          "spanId": "span-789",
+          "commit": "a1b2c3d",
+          "metadata": {
+            "parentResourceId": "server-5432"
+          }
+        },
+        {
+          "level": "warning",
+          "message": "Service unavailable",
+          "resourceId": "server-9876",
+          "timestamp": "2023-09-15T10:45:00Z",
+          "traceId": "ghi-pqr-789",
+          "spanId": "span-012",
+          "commit": "4e5d6f7",
+          "metadata": {
+            "parentResourceId": "server-6543"
+          }
+        },
+        {
+          "level": "error",
+          "message": "Failed to connect to DB",
+          "resourceId": "server-1234",
+          "timestamp": "2023-09-15T08:00:00Z",
+          "traceId": "abc-xyz-123",
+          "spanId": "span-456",
+          "commit": "5e5342f",
+          "metadata": {
+            "parentResourceId": "server-0987"
+          }
+        },
+        {
+          "level": "error",
+          "message": "Connection timeout",
+          "resourceId": "server-5678",
+          "timestamp": "2023-09-15T09:30:00Z",
+          "traceId": "def-uvw-456",
+          "spanId": "span-789",
+          "commit": "a1b2c3d",
+          "metadata": {
+            "parentResourceId": "server-5432"
+          }
+        },
+        {
+          "level": "warning",
+          "message": "Service unavailable",
+          "resourceId": "server-9876",
+          "timestamp": "2023-09-15T10:45:00Z",
+          "traceId": "ghi-pqr-789",
+          "spanId": "span-012",
+          "commit": "4e5d6f7",
+          "metadata": {
+            "parentResourceId": "server-6543"
+          }
+        },
+        {
+          "level": "error",
+          "message": "Failed to connect to DB",
+          "resourceId": "server-1234",
+          "timestamp": "2023-09-15T08:00:00Z",
+          "traceId": "abc-xyz-123",
+          "spanId": "span-456",
+          "commit": "5e5342f",
+          "metadata": {
+            "parentResourceId": "server-0987"
+          }
+        },
+        {
+          "level": "error",
+          "message": "Connection timeout",
+          "resourceId": "server-5678",
+          "timestamp": "2023-09-15T09:30:00Z",
+          "traceId": "def-uvw-456",
+          "spanId": "span-789",
+          "commit": "a1b2c3d",
+          "metadata": {
+            "parentResourceId": "server-5432"
+          }
+        },
+        {
+          "level": "warning",
+          "message": "Service unavailable",
+          "resourceId": "server-9876",
+          "timestamp": "2023-09-15T10:45:00Z",
+          "traceId": "ghi-pqr-789",
+          "spanId": "span-012",
+          "commit": "4e5d6f7",
+          "metadata": {
+            "parentResourceId": "server-6543"
+          }
+        }
+      ]
+      
+      const socket = io('http://localhost:3000');
+      // Send each log to the server using WebSocket
+      logs.forEach(async (log, index) => {
+        try {
+          socket.emit('newLog', log);
+          console.log(`Log ${index + 1} sent successfully via WebSocket.`);
+        } catch (error) {
+          console.error(`Error sending log ${index + 1}:`, error.message);
+        }
+      });
+    }
+   
+    async function searchLogs() {
+          // Show loader while searching
+
+const loader = document.getElementById('loader');
+      const level = document.getElementById('level').value;
+      const message = document.getElementById('message').value;
+      const resourceId = document.getElementById('resourceId').value;
+      const timestamp = document.getElementById('timestamp').value;
+      const traceId = document.getElementById('traceId').value;
+      const spanId = document.getElementById('spanId').value;
+      const commit = document.getElementById('commit').value;
+      const parentResourceId = document.getElementById('parentResourceId').value;
+  
+      const searchCriteria = {
+        level,
+        message,
+        resourceId,
+        timestamp,
+        traceId,
+        spanId,
+        commit,
+        parentResourceId
+      };
+      loader.style.display = 'block';
+
+// Simulate a delay for demonstration purposes (remove in a real application)
+await new Promise(resolve => setTimeout(resolve, 2000));
+      console.log(searchCriteria);
+  
+      try {
+        const response = await fetch('http://localhost:3000/search', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(searchCriteria),
+        });
+  
+        const result = await response.json();
+  
+        // Handle the search results
+        if (result.success) {
+          const resultsContainer = document.getElementById('results');
+          resultsContainer.innerHTML = '<h3>Search Results:</h3>';
+          result.results.forEach((log) => {
+            const logString = JSON.stringify(log, null, 2);
+            const logElement = document.createElement('pre');
+            logElement.textContent = logString;
+            resultsContainer.appendChild(logElement);
+          });
+          loader.style.display = 'None';
+        } else {
+          console.error('Search failed:', result.error);
+          alert('Search failed. Please check the console for details.');
+          loader.style.display = 'None';
+        }
+      } catch (error) {
+        console.error('Error during search:', error.message);
+        alert('An error occurred during the search. Please check the console for details.');
+        loader.style.display = 'None';
+      }
+    }
+  </script>
+</body>
+
+</html>
